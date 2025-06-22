@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Air Quality Wheel of Fortune App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Secular+One&display=swap');
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f4f8;
+        }
+        
+        .wheel-segment:nth-child(1) { --segment-color: #e74c3c; }
+        .wheel-segment:nth-child(2) { --segment-color: #f39c12; }
+        .wheel-segment:nth-child(3) { --segment-color: #f1c40f; }
+        .wheel-segment:nth-child(4) { --segment-color: #2ecc71; }
+        .wheel-segment:nth-child(5) { --segment-color: #3498db; }
+        .wheel-segment:nth-child(6) { --segment-color: #9b59b6; }
+        .wheel-segment:nth-child(7) { --segment-color: #1abc9c; }
+        .wheel-segment:nth-child(8) { --segment-color: #d35400; }
+        
+        .puzzle-letter {
+            min-width: 30px;
+            height: 40px;
+            margin: 0 2px;
+            border-bottom: 3px solid #3498db;
+        }
+        
+        @media (min-width: 768px) {
+            .puzzle-letter {
+                min-width: 40px;
+                height: 50px;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+    <header class="bg-gradient-to-r from-blue-600 to-green-500 py-4 shadow-lg">
+        <div class="container mx-auto px-4">
+            <h1 class="text-3xl md:text-4xl font-bold text-center text-white font-['Secular_One']">
+                AIR QUALITY WHEEL OF FORTUNE
+            </h1>
+        </div>
+    </header>
+
+    <main class="flex-grow container mx-auto px-4 py-6">
+        <!-- Game Setup Screen -->
+        <div id="setupScreen" class="bg-white rounded-lg shadow-md p-6 max-w-2xl mx-auto">
+            <h2 class="text-2xl font-bold text-blue-600 mb-4">Game Setup</h2>
+            
+            <div class="mb-6">
+                <label class="block text-gray-700 font-medium mb-2">Number of Teams</label>
+                <select id="teamCount" class="w-full p-2 border border-gray-300 rounded">
+                    <option value="2">2 Teams</option>
+                    <option value="3" selected>3 Teams</option>
+                    <option value="4">4 Teams</option>
+                </select>
+            </div>
+            
+            <div class="mb-6">
+                <label class="block text-gray-700 font-medium mb-2">Team Names</label>
+                <div id="teamNameInputs" class="space-y-2">
+                    <input type="text" placeholder="Team 1" class="w-full p-2 border border-gray-300 rounded">
+                    <input type="text" placeholder="Team 2" class="w-full p-2 border border-gray-300 rounded">
+                    <input type="text" placeholder="Team 3" class="w-full p-2 border border-gray-300 rounded">
+                </div>
+            </div>
+            
+            <div class="mb-6">
+                <label class="block text-gray-700 font-medium mb-2">Puzzle Category</label>
+                <select id="puzzleCategory" class="w-full p-2 border border-gray-300 rounded">
+                    <option value="all">All Categories</option>
+                    <option value="pollutants">Air Pollutants</option>
+                    <option value="health">Health Impacts</option>
+                    <option value="tech">Technologies</option>
+                    <option value="regulations">Regulations</option>
+                </select>
+            </div>
+            
+            <button id="startGameBtn" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg transition duration-200">
+                START GAME
+            </button>
+        </div>
+
+        <!-- Main Game Screen (initially hidden) -->
+        <div id="gameScreen" class="hidden">
+            <!-- Wheel and Puzzle Area -->
+            <div class="flex flex-col lg:flex-row gap-6 mb-6">
+                <!-- Wheel Container -->
+                <div class="lg:w-1/2 flex flex-col items-center">
+                    <div class="relative w-64 h-64 md:w-80 md:h-80 mb-4">
+                        <div id="wheel" class="w-full h-full rounded-full relative overflow-hidden shadow-xl">
+                            <!-- Wheel segments will be added by JavaScript -->
+                        </div>
+                        <div id="wheelPointer" class="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-0 h-0 border-l-8 border-r-8 border-t-16 border-l-transparent border-r-transparent border-t-red-600"></div>
+                    </div>
+                    
+                    <button id="spinBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-full transition duration-200 mb-4">
+                        SPIN WHEEL
+                    </button>
+                    
+                    <div id="currentTeamDisplay" class="text-xl font-bold text-center mb-2">
+                        Team 1's Turn
+                    </div>
+                    <div id="currentScoreDisplay" class="text-lg text-center mb-4">
+                        Current Round Score: $0
+                    </div>
+                </div>
+                
+                <!-- Puzzle Area -->
+                <div class="lg:w-1/2 bg-white rounded-lg shadow-md p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <div id="puzzleCategoryDisplay" class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
+                            Air Pollutant
+                        </div>
+                        <button id="solvePuzzleBtn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded transition duration-200">
+                            SOLVE PUZZLE
+                        </button>
+                    </div>
+                    
+                    <div id="puzzleDisplay" class="flex justify-center flex-wrap mb-6 min-h-20">
+                        <!-- Puzzle letters will be inserted here -->
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h3 class="text-lg font-semibold mb-2">Select a Letter</h3>
+                        <div id="letterBoard" class="flex flex-wrap gap-2 justify-center">
+                            <!-- Letter buttons will be inserted here -->
+                        </div>
+                    </div>
+                    
+                    <div id="messageDisplay" class="text-center text-lg font-semibold text-red-600 min-h-8">
+                        <!-- Game messages will appear here -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Scores and Controls -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-bold mb-4">Scores</h2>
+                <div id="scoreboard" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                    <!-- Team scores will be inserted here -->
+                </div>
+                
+                <div class="flex flex-wrap gap-4 justify-center">
+                    <button id="bankruptBtn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded transition duration-200">
+                        BANKRUPT
+                    </button>
+                    <button id="loseTurnBtn" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded transition duration-200">
+                        LOSE TURN
+                    </button>
+                    <button id="newPuzzleBtn" class="bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded transition duration-200">
+                        NEW PUZZLE
+                    </button>
+                    <button id="newGameBtn" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded transition duration-200">
+                        NEW GAME
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Solve Puzzle Modal (hidden initially) -->
+        <div id="solveModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+            <div class="bg-white rounded-lg shadow-xl p-6 max-w-md w-full">
+                <h3 class="text-xl font-bold text-blue-600 mb-4">Solve the Puzzle</h3>
+                <input id="puzzleGuessInput" type="text" class="w-full p-3 border border-gray-300 rounded mb-4" placeholder="Enter your solution...">
+                <div class="flex justify-end gap-3">
+                    <button id="cancelSolveBtn" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded transition duration-200">
+                        Cancel
+                    </button>
+                    <button id="submitSolveBtn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded transition duration-200">
+                        Submit
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-gray-800 text-white py-4">
+        <div class="container mx-auto px-4 text-center">
+            <p>Air Quality Wheel of Fortune - Educational Game</p>
+        </div>
+    </footer>
+
+    <script>
+        // Game Data
+        const puzzles = {
+            all: [
+                { category: "Air Pollutant", phrase: "PARTICULATE MATTER" },
+                { category: "Regulation", phrase: "CLEAN AIR ACT" },
+                { category: "Measurement", phrase: "AIR QUALITY INDEX" },
+                { category: "Phenomenon", phrase: "GREENHOUSE EFFECT" },
+                { category: "Health Impact", phrase: "ASTHMA TRIGGER" },
+                { category: "Technology", phrase: "HEPA FILTER" },
+                { category: "Pollution Source", phrase: "VEHICLE EMISSIONS" },
+                { category: "Natural Event", phrase: "WILDFIRE SMOKE" },
+                { category: "Measurement", phrase: "PARTS PER MILLION" },
+                { category: "Pollutant", phrase: "CARBON MONOXIDE" },
+                { category: "Health Impact", phrase: "RESPIRATORY DISEASE" },
+                { category: "Technology", phrase: "ELECTRIC VEHICLE" }
+            ],
+            pollutants: [
+                { category: "Air Pollutant", phrase: "PARTICULATE MATTER" },
+                { category: "Pollutant", phrase: "CARBON MONOXIDE" },
+                { category: "Pollutant", phrase: "SULFUR DIOXIDE" },
+                { category: "Pollutant", phrase: "NITROGEN OXIDES" },
+                { category: "Pollutant", phrase: "GROUND LEVEL OZONE" },
+                { category: "Pollutant", phrase: "VOLATILE ORGANIC COMPOUNDS" }
+            ],
+            health: [
+                { category: "Health Impact", phrase: "ASTHMA TRIGGER" },
+                { category: "Health Impact", phrase: "RESPIRATORY DISEASE" },
+                { category: "Health Impact", phrase: "LUNG CANCER" },
+                { category: "Health Impact", phrase: "CARDIOVASCULAR DISEASE" },
+                { category: "Health Impact", phrase: "ALLERGIC REACTIONS" },
+                { category: "Health Impact", phrase: "PREMATURE DEATH" }
+            ],
+            tech: [
+                { category: "Technology", phrase: "HEPA FILTER" },
+                { category: "Technology", phrase: "ELECTRIC VEHICLE" },
+                { category: "Technology", phrase: "SCRUBBER SYSTEM" },
+                { category: "Technology", phrase: "CATALYTIC CONVERTER" },
+                { category: "Technology", phrase: "AIR MONITORING STATION" },
+                { category: "Technology", phrase: "CARBON CAPTURE" }
+            ],
+            regulations: [
+                { category: "Regulation", phrase: "CLEAN AIR ACT" },
+                { category: "Regulation", phrase: "EMISSION STANDARDS" },
+                { category: "Regulation", phrase: "ENVIRONMENTAL PROTECTION AGENCY" },
+                { category: "Regulation", phrase: "NATIONAL AMBIENT AIR QUALITY STANDARDS" },
+                { category: "Regulation", phrase: "CLEAN POWER PLAN" },
+                { category: "Regulation", phrase: "MONTREAL PROTOCOL" }
+            ]
+        };
+
+        const wheelValues = [500, 600, 700, 800, 900, "Bankrupt", "Lose Turn", 1000];
+        const vowels = ['A', 'E', 'I', 'O', 'U'];
+        
+        // Game State
+        let gameState = {
+            teams: [],
+            currentTeamIndex: 0,
+            currentRoundScore: 0,
+            currentPuzzle: null,
+            guessedLetters: [],
+            gameStarted: false,
+            spinning: false
+        };
+
+        // DOM Elements
+        const setupScreen = document.getElementById('setupScreen');
+        const gameScreen = document.getElementById('gameScreen');
+        const teamCountSelect = document.getElementById('teamCount');
+        const teamNameInputs = document.getElementById('teamNameInputs');
+        const startGameBtn = document.getElementById('startGameBtn');
+        const wheel = document.getElementById('wheel');
+        const spinBtn = document.getElementById('spinBtn');
+        const currentTeamDisplay = document.getElementById('currentTeamDisplay');
+        const currentScoreDisplay = document.getElementById('currentScoreDisplay');
+        const puzzleDisplay = document.getElementById('puzzleDisplay');
+        const puzzleCategoryDisplay = document.getElementById('puzzleCategoryDisplay');
+        const letterBoard = document.getElementById('letterBoard');
+        const messageDisplay = document.getElementById('messageDisplay');
+        const scoreboard = document.getElementById('scoreboard');
+        const solvePuzzleBtn = document.getElementById('solvePuzzleBtn');
+        const bankruptBtn = document.getElementById('bankruptBtn');
+        const loseTurnBtn = document.getElementById('loseTurnBtn');
+        const newPuzzleBtn = document.getElementById('newPuzzleBtn');
+        const newGameBtn = document.getElementById('newGameBtn');
+        const solveModal = document.getElementById('solveModal');
+        const puzzleGuessInput = document.getElementById('puzzleGuessInput');
+        const cancelSolveBtn = document.getElementById('cancelSolveBtn');
+        const submitSolveBtn = document.getElementById('submitSolveBtn');
+        const puzzleCategorySelect = document.getElementById('puzzleCategory');
+
+        // Initialize the game
+        function init() {
+            createWheel();
+            setupTeamNameInputs();
+            setupEventListeners();
+        }
+
+        // Create the wheel segments
+        function createWheel() {
+            wheel.innerHTML = '';
+            const segmentAngle = 360 / wheelValues.length;
+            
+            wheelValues.forEach((value, index) => {
+                const segment = document.createElement('div');
+                segment.className = 'wheel-segment absolute top-0 left-0 w-full h-full';
+                segment.style.transform = `rotate(${index * segmentAngle}deg)`;
+                segment.style.clipPath = `polygon(50% 50%, 50% 0%, ${50 + 50 * Math.sin(segmentAngle * Math.PI / 180)}% ${50 - 50 * Math.cos(segmentAngle * Math.PI / 180)}%)`;
+                segment.style.backgroundColor = `var(--segment-color)`;
+                
+                const valueText = document.createElement('div');
+                valueText.className = 'absolute text-white font-bold text-sm';
+                valueText.style.transform = `rotate(${segmentAngle / 2}deg) translate(0, -30px)`;
+                valueText.textContent = value === "Bankrupt" ? "BANKRUPT" : value === "Lose Turn" ? "LOSE TURN" : `$${value}`;
+                
+                segment.appendChild(valueText);
+                wheel.appendChild(segment);
+            });
+        }
+
+        // Setup team name inputs based on selected team count
+        function setupTeamNameInputs() {
+            teamCountSelect.addEventListener('change', () => {
+                const count = parseInt(teamCountSelect.value);
+                teamNameInputs.innerHTML = '';
+                
+                for (let i = 0; i < count; i++) {
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.placeholder = `Team ${i + 1}`;
+                    input.className = 'w-full p-2 border border-gray-300 rounded';
+                    teamNameInputs.appendChild(input);
+                }
+            });
+        }
+
+        // Setup all event listeners
+        function setupEventListeners() {
+            startGameBtn.addEventListener('click', startGame);
+            spinBtn.addEventListener('click', spinWheel);
+            solvePuzzleBtn.addEventListener('click', showSolveModal);
+            bankruptBtn.addEventListener('click', () => bankrupt());
+            loseTurnBtn.addEventListener('click', () => loseTurn());
+            newPuzzleBtn.addEventListener('click', newPuzzle);
+            newGameBtn.addEventListener('click', newGame);
+            cancelSolveBtn.addEventListener('click', hideSolveModal);
+            submitSolveBtn.addEventListener('click', submitPuzzleSolution);
+        }
+
+        // Start a new game
+        function startGame() {
+            const teamCount = parseInt(teamCountSelect.value);
+            const inputs = teamNameInputs.querySelectorAll('input');
+            
+            gameState.teams = [];
+            for (let i = 0; i < teamCount; i
